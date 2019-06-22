@@ -1,0 +1,692 @@
+---
+
+# (c) Wong Hoi Sing Edison <hswong3i@pantarei-design.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-hostpath-provisioner
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-provisioner
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents"]
+    verbs: ["get", "list"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-provisioner-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpath-provisioner
+    namespace: csi-hostpath
+roleRef:
+  kind: ClusterRole
+  name: csi-hostpath-provisioner
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-provisioner
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-provisioner-role-cfg
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpath-provisioner
+    namespace: csi-hostpath
+roleRef:
+  kind: Role
+  name: csi-hostpath-provisioner
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-hostpath-attacher
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-attacher
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-attacher-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpath-attacher
+    namespace: csi-hostpath
+roleRef:
+  kind: ClusterRole
+  name: csi-hostpath-attacher
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: external-attacher-cfg
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-attacher-role-cfg
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpath-attacher
+    namespace: csi-hostpath
+roleRef:
+  kind: Role
+  name: external-attacher-cfg
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-hostpath-snapshotter
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-snapshotter
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents"]
+    verbs: ["create", "get", "list", "watch", "update", "delete"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots/status"]
+    verbs: ["update"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["create", "list", "watch", "delete", "get", "update"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-snapshotter-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpath-snapshotter
+    namespace: csi-hostpath
+roleRef:
+  kind: ClusterRole
+  name: csi-hostpath-snapshotter
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-snapshotter
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-snapshotter
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpath-snapshotter
+    namespace: csi-hostpath
+roleRef:
+  kind: Role
+  name: csi-hostpath-snapshotter
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+provisioner: csi-hostpath
+volumeBindingMode: Immediate
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-hostpath-provisioner
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath-provisioner
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  selector:
+    app.kubernetes.io/name: csi-hostpath-provisioner
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: csi-hostpath-provisioner
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath-provisioner
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  serviceName: csi-hostpath-provisioner
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: csi-hostpath-provisioner
+      app.kubernetes.io/part-of: csi-hostpath
+      addonmanager.kubernetes.io/mode: Reconcile
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: csi-hostpath-provisioner
+        app.kubernetes.io/part-of: csi-hostpath
+        addonmanager.kubernetes.io/mode: Reconcile
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - csi-hostpathplugin
+              topologyKey: kubernetes.io/hostname
+      serviceAccountName: csi-hostpath-provisioner
+      containers:
+        - name: csi-hostpath-provisioner
+          image: quay.io/k8scsi/csi-provisioner:v1.1.0
+          args:
+            - -v=5
+            - --csi-address=/csi/csi.sock
+            - --connection-timeout=15s
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+      volumes:
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/csi-hostpath
+            type: DirectoryOrCreate
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-hostpath-attacher
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath-attacher
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  selector:
+    app.kubernetes.io/name: csi-hostpath-attacher
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: csi-hostpath-attacher
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath-attacher
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  serviceName: csi-hostpath-attacher
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: csi-hostpath-attacher
+      app.kubernetes.io/part-of: csi-hostpath
+      addonmanager.kubernetes.io/mode: Reconcile
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: csi-hostpath-attacher
+        app.kubernetes.io/part-of: csi-hostpath
+        addonmanager.kubernetes.io/mode: Reconcile
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - csi-hostpathplugin
+              topologyKey: kubernetes.io/hostname
+      serviceAccountName: csi-hostpath-attacher
+      containers:
+        - name: csi-hostpath-attacher
+          image: quay.io/k8scsi/csi-attacher:v1.1.1
+          args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+      volumes:
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/csi-hostpath
+            type: DirectoryOrCreate
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-hostpath-snapshotter
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath-snapshotter
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  selector:
+    app.kubernetes.io/name: csi-hostpath-snapshotter
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: csi-hostpath-snapshotter
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath-snapshotter
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  serviceName: csi-hostpath-snapshotter
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: csi-hostpath-snapshotter
+      app.kubernetes.io/part-of: csi-hostpath
+      addonmanager.kubernetes.io/mode: Reconcile
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: csi-hostpath-snapshotter
+        app.kubernetes.io/part-of: csi-hostpath
+        addonmanager.kubernetes.io/mode: Reconcile
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - csi-hostpathplugin
+              topologyKey: kubernetes.io/hostname
+      serviceAccountName: csi-hostpath-snapshotter
+      containers:
+        - name: csi-hostpath-snapshotter
+          image: quay.io/k8scsi/csi-snapshotter:v1.1.0
+          args:
+            - -v=5
+            - --csi-address=/csi/csi.sock
+            - --connection-timeout=15s
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+      volumes:
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/csi-hostpath
+            type: DirectoryOrCreate
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-hostpathplugin
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpathplugin
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  selector:
+    app.kubernetes.io/name: csi-hostpathplugin
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: csi-hostpathplugin
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpathplugin
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  serviceName: csi-hostpathplugin
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: csi-hostpathplugin
+      app.kubernetes.io/part-of: csi-hostpath
+      addonmanager.kubernetes.io/mode: Reconcile
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: csi-hostpathplugin
+        app.kubernetes.io/part-of: csi-hostpath
+        addonmanager.kubernetes.io/mode: Reconcile
+    spec:
+      hostNetwork: true
+      containers:
+        - name: node-driver-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.1.0
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /registration/csi-hostpath /registration/csi-hostpath-reg.sock"]
+          args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi-hostpath/csi.sock
+          securityContext:
+            privileged: true
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+            - mountPath: /registration
+              name: registration-dir
+            - mountPath: /csi-data-dir
+              name: csi-data-dir
+        - name: hostpath
+          image: {{ csi_hostpathplugin_image_repository }}/hostpathplugin:{{ csi_hostpathplugin_version }}
+          args:
+            - "--v=5"
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--nodeid=$(KUBE_NODE_NAME)"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          securityContext:
+            privileged: true
+          ports:
+            - containerPort: 9898
+              name: healthz
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            periodSeconds: 2
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+            - mountPath: /var/lib/kubelet/pods
+              mountPropagation: Bidirectional
+              name: mountpoint-dir
+            - mountPath: /var/lib/kubelet/plugins
+              mountPropagation: Bidirectional
+              name: plugins-dir
+            - mountPath: /csi-data-dir
+              name: csi-data-dir
+        - name: liveness-probe
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+          image: quay.io/k8scsi/livenessprobe:v1.1.0
+          args:
+            - --csi-address=/csi/csi.sock
+            - --connection-timeout=3s
+            - --health-port=9898
+      volumes:
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/csi-hostpath
+            type: DirectoryOrCreate
+        - name: mountpoint-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+        - name: plugins-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins
+            type: Directory
+        - name: csi-data-dir
+          hostPath:
+            path: {{ csi_hostpath_data_dir }}
+            type: DirectoryOrCreate
