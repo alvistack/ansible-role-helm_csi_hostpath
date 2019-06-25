@@ -398,7 +398,7 @@ spec:
           image: {{ csi_provisioner_image_repository }}/csi-provisioner:{{ csi_provisioner_version }}
           args:
             - -v=5
-            - --csi-address=/csi/csi-hostpath-provisioner.sock
+            - --csi-address=/csi/csi.sock
             - --connection-timeout=15s
           volumeMounts:
             - mountPath: /csi
@@ -469,7 +469,7 @@ spec:
           image: {{ csi_attacher_image_repository }}/csi-attacher:{{ csi_attacher_version }}
           args:
             - --v=5
-            - --csi-address=/csi/csi-hostpath-provisioner.sock
+            - --csi-address=/csi/csi.sock
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -539,7 +539,7 @@ spec:
           image: {{ csi_snapshotter_image_repository }}/csi-snapshotter:{{ csi_snapshotter_version }}
           args:
             - -v=5
-            - --csi-address=/csi/csi-hostpath-provisioner.sock
+            - --csi-address=/csi/csi.sock
             - --connection-timeout=15s
           volumeMounts:
             - mountPath: /csi
@@ -604,7 +604,7 @@ spec:
                 command: ["/bin/sh", "-c", "rm -rf /registration/csi-hostpath /registration/csi-hostpath-reg.sock"]
           args:
             - --v=5
-            - --csi-address=/csi/csi-hostpath-provisioner.sock
+            - --csi-address=/csi/csi.sock
             - --kubelet-registration-path=/var/lib/kubelet/plugins/csi-hostpath/csi.sock
           securityContext:
             privileged: true
@@ -635,7 +635,7 @@ spec:
                   apiVersion: v1
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
-              value: unix:///csi/csi-hostpath-provisioner.sock
+              value: unix:///csi/csi.sock
           securityContext:
             privileged: true
           ports:
@@ -667,7 +667,7 @@ spec:
               name: socket-dir
           image: {{ livenessprobe_image_repository }}/livenessprobe:{{ livenessprobe_version }}
           args:
-            - --csi-address=/csi/csi-hostpath-provisioner.sock
+            - --csi-address=/csi/csi.sock
             - --connection-timeout=3s
             - --health-port=9898
       volumes:
