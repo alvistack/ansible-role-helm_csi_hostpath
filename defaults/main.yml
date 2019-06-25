@@ -14,6 +14,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# csi-provisioner version.
+csi_provisioner_version: "v1.3.0"
+
+# ImageRepository sets the container registry to pull images from.
+csi_provisioner_image_repository: "quay.io/k8scsi"
+
+# csi-attacher version.
+csi_attacher_version: "v1.2.0"
+
+# ImageRepository sets the container registry to pull images from.
+csi_attacher_image_repository: "quay.io/k8scsi"
+
+# csi-snapshotter version.
+csi_snapshotter_version: "v1.2.0"
+
+# ImageRepository sets the container registry to pull images from.
+csi_snapshotter_image_repository: "quay.io/k8scsi"
+
+# csi-node-drive-registrar version.
+csi_node_drive_registrar_version: "v1.1.0"
+
+# ImageRepository sets the container registry to pull images from.
+csi_node_drive_registrar_image_repository: "quay.io/k8scsi"
+
+# livenessprobe version.
+livenessprobe_version: "v1.1.0"
+
+# ImageRepository sets the container registry to pull images from.
+livenessprobe_image_repository: "quay.io/k8scsi"
+
 # csi-hostpathplugin version.
 csi_hostpathplugin_version: "v1.1.0"
 
