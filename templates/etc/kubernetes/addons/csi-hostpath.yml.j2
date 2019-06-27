@@ -397,7 +397,7 @@ spec:
         - name: csi-hostpath-provisioner
           image: {{ csi_provisioner_image_repository }}/csi-provisioner:{{ csi_provisioner_version }}
           args:
-            - -v=5
+            - --v=5
             - --csi-address=/csi/csi.sock
             - --connection-timeout=15s
           volumeMounts:
@@ -538,7 +538,7 @@ spec:
         - name: csi-hostpath-snapshotter
           image: {{ csi_snapshotter_image_repository }}/csi-snapshotter:{{ csi_snapshotter_version }}
           args:
-            - -v=5
+            - --v=5
             - --csi-address=/csi/csi.sock
             - --connection-timeout=15s
           volumeMounts:
@@ -627,7 +627,6 @@ spec:
             - --v=5
             - --nodeid=$(KUBE_NODE_NAME)
             - --endpoint=$(CSI_ENDPOINT)
-            - --ephemeral=true
           env:
             - name: KUBE_NODE_NAME
               valueFrom:
