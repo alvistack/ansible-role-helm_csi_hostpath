@@ -38,20 +38,3 @@
       command: kubectl version
       register: result
       changed_when: result is not succeeded
-
-    - name: create pvc
-      k8s:
-        state: "present"
-        definition:
-          apiVersion: v1
-          kind: PersistentVolumeClaim
-          metadata:
-            name: csi-hostpath
-            namespace: default
-          spec:
-            storageClassName: csi-hostpath
-            accessModes:
-              - ReadWriteOnce
-            resources:
-              requests:
-                storage: 100Mi
