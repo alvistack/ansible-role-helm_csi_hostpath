@@ -336,7 +336,7 @@ metadata:
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: Reconcile
 provisioner: csi-hostpath
-volumeBindingMode: Immediate
+volumeBindingMode: WaitForFirstConsumer
 
 ---
 apiVersion: v1
