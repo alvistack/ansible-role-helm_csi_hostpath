@@ -24,11 +24,6 @@ platforms:
       protocol: simplestreams
       alias: ubuntu/bionic/amd64
     groups:
-      - ceph-mon
-      - ceph-mgr
-      - ceph-osd
-      - ceph-mds
-      - ceph-rgw
       - kube-master
       - kube-node
 lint:

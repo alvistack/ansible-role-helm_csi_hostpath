@@ -411,6 +411,7 @@ spec:
             - --v=5
             - --csi-address=/csi/csi.sock
             - --connection-timeout=15s
+            - --feature-gates=Topology=true
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -560,6 +561,74 @@ spec:
           hostPath:
             path: /var/lib/kubelet/plugins/csi-hostpath
             type: DirectoryOrCreate
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-hostpath-resizer
+  labels:
+    app.kubernetes.io/name: csi-hostpath-resizer
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  selector:
+    app.kubernetes.io/name: csi-hostpath-resizer
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: csi-hostpath-resizer
+  labels:
+    app.kubernetes.io/name: csi-hostpath-resizer
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  serviceName: csi-hostpath-resizer
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: csi-hostpath-resizer
+      app.kubernetes.io/part-of: csi-hostpath
+      addonmanager.kubernetes.io/mode: Reconcile
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: csi-hostpath-resizer
+        app.kubernetes.io/part-of: csi-hostpath
+        addonmanager.kubernetes.io/mode: Reconcile
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - csi-hostpathplugin
+              topologyKey: kubernetes.io/hostname
+      serviceAccountName: csi-resizer
+      containers:
+        - name: csi-resizer
+          image: {{ csi_resizer_image_repository }}/csi-resizer:{{ csi_resizer_version }}
+          args:
+            - -v=5
+            - -csi-address=/csi/csi.sock
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+      volumes:
+        - hostPath:
+            path: /var/lib/kubelet/plugins/csi-hostpath
+            type: DirectoryOrCreate
+          name: socket-dir
 
 ---
 apiVersion: v1
