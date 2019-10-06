@@ -24,11 +24,6 @@ platforms:
       protocol: simplestreams
       alias: centos/7/amd64
     groups:
-      - ceph-mon
-      - ceph-mgr
-      - ceph-osd
-      - ceph-mds
-      - ceph-rgw
       - kube-master
       - kube-node
 lint:
