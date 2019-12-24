@@ -39,7 +39,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: csi-hostpath-provisioner
-  namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
@@ -144,7 +143,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: csi-hostpath-attacher
-  namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
@@ -237,7 +235,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: csi-hostpath-snapshotter
-  namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
