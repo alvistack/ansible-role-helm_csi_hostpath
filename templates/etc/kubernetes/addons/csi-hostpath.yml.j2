@@ -45,6 +45,9 @@ metadata:
     addonmanager.kubernetes.io/mode: Reconcile
 rules:
   - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "create", "delete"]
   - apiGroups: [""]
@@ -68,15 +71,12 @@ rules:
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: csi-hostpath-provisioner-role
+  name: csi-hostpath-provisioner
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
@@ -112,7 +112,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: csi-hostpath-provisioner-role-cfg
+  name: csi-hostpath-provisioner
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -150,7 +150,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
-    verbs: ["get", "list", "watch", "update"]
+    verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list", "watch"]
@@ -159,7 +159,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
-    verbs: ["get", "list", "watch", "update"]
+    verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "list"]
@@ -168,7 +168,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: csi-hostpath-attacher-role
+  name: csi-hostpath-attacher
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
@@ -186,7 +186,7 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: external-attacher-cfg
+  name: csi-hostpath-attacher
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -204,7 +204,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: csi-hostpath-attacher-role-cfg
+  name: csi-hostpath-attacher
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -216,7 +216,7 @@ subjects:
     namespace: csi-hostpath
 roleRef:
   kind: Role
-  name: external-attacher-cfg
+  name: csi-hostpath-attacher
   apiGroup: rbac.authorization.k8s.io
 
 ---
@@ -275,7 +275,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: csi-hostpath-snapshotter-role
+  name: csi-hostpath-snapshotter
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
@@ -321,6 +321,95 @@ subjects:
 roleRef:
   kind: Role
   name: csi-hostpath-snapshotter
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-hostpath-resizer
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: csi-hostpath-resizer
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims/status"]
+    verbs: ["update", "patch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-resizer
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpath-resizer
+    namespace: csi-hostpath
+roleRef:
+  kind: ClusterRole
+  name: csi-hostpath-resizer
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-resizer
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-hostpath-resizer
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpath-resizer
+    namespace: csi-hostpath
+roleRef:
+  kind: Role
+  name: csi-hostpath-resizer
   apiGroup: rbac.authorization.k8s.io
 
 ---
@@ -578,10 +667,11 @@ spec:
       port: 12345
 
 ---
-kind: StatefulSet
 apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   name: csi-hostpath-resizer
+  namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath-resizer
     app.kubernetes.io/part-of: csi-hostpath
@@ -606,26 +696,26 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchExpressions:
-                  - key: app
+                  - key: app.kubernetes.io/name
                     operator: In
                     values:
                       - csi-hostpathplugin
               topologyKey: kubernetes.io/hostname
-      serviceAccountName: csi-resizer
+      serviceAccountName: csi-hostpath-resizer
       containers:
-        - name: csi-resizer
+        - name: csi-hostpath-resizer
           image: {{ csi_resizer_image_repository }}/csi-resizer:{{ csi_resizer_version }}
           args:
-            - -v=5
-            - -csi-address=/csi/csi.sock
+            - --v=5
+            - --csi-address=/csi/csi.sock
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
       volumes:
-        - hostPath:
+        - name: socket-dir
+          hostPath:
             path: /var/lib/kubelet/plugins/csi-hostpath
             type: DirectoryOrCreate
-          name: socket-dir
 
 ---
 apiVersion: v1
