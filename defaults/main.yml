@@ -32,17 +32,17 @@ csi_snapshotter_version: "v1.2.2"
 # ImageRepository sets the container registry to pull images from.
 csi_snapshotter_image_repository: "quay.io/k8scsi"
 
-# csi-resizer version.
-csi_resizer_version: "v0.3.0"
-
-# ImageRepository sets the container registry to pull images from.
-csi_resizer_image_repository: "quay.io/k8scsi"
-
 # csi-node-drive-registrar version.
 csi_node_drive_registrar_version: "v1.2.0"
 
 # ImageRepository sets the container registry to pull images from.
 csi_node_drive_registrar_image_repository: "quay.io/k8scsi"
+
+# csi-resizer version.
+csi_resizer_version: "v0.3.0"
+
+# ImageRepository sets the container registry to pull images from.
+csi_resizer_image_repository: "quay.io/k8scsi"
 
 # livenessprobe version.
 livenessprobe_version: "v1.1.0"
