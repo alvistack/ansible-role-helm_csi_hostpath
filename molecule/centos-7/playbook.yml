@@ -34,14 +34,6 @@
     - role: kubernetes-flannel
       flannel_iface: "eth1"
 
-  post_tasks:
-    - name: kubectl version
-      environment:
-        PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-      command: kubectl version
-      register: result
-      changed_when: result is not succeeded
-
 - hosts: kube-master
   remote_user: root
   become: true
@@ -67,3 +59,51 @@
       register: result
       until: result is succeeded
       retries: 30
+
+    - name: create pvc
+      environment:
+        PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      vars:
+        ansible_python_interpreter: "python3"
+      k8s:
+        state: "present"
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: root
+            namespace: default
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 100Mi
+
+    - name: create pod
+      environment:
+        PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      vars:
+        ansible_python_interpreter: "python3"
+      k8s:
+        state: "present"
+        definition:
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: busybox
+            namespace: default
+          spec:
+            containers:
+              - name: busybox
+                image: busybox
+                command:
+                  - sleep
+                  - "3600"
+                volumeMounts:
+                  - name: root
+                    mountPath: /root
+            volumes:
+              - name: root
+                persistentVolumeClaim:
+                  claimName: root
