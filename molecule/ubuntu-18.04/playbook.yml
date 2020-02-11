@@ -24,7 +24,7 @@
     - role: kubernetes-cni
     - role: kubectl
 
-- hosts: kube-master
+- hosts: all
   remote_user: root
   become: true
   roles:
@@ -34,7 +34,7 @@
     - role: kubernetes-flannel
       flannel_iface: "eth1"
 
-- hosts: kube-master
+- hosts: all
   remote_user: root
   become: true
   roles:
@@ -55,7 +55,7 @@
             annotations:
               storageclass.kubernetes.io/is-default-class: "true"
         state: present
-      when: ansible_hostname == groups['kube-master'][0]
+      when: ansible_hostname == groups['all'][0]
       register: result
       until: result is succeeded
       retries: 30
