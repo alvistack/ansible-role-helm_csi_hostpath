@@ -421,8 +421,10 @@ metadata:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: Reconcile
-provisioner: csi-hostpath
-volumeBindingMode: WaitForFirstConsumer
+provisioner: hostpath.csi.k8s.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
 
 ---
 apiVersion: snapshot.storage.k8s.io/v1beta1
@@ -433,7 +435,7 @@ metadata:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: Reconcile
-driver: hostpath.csi.k8s.io #csi-hostpath
+driver: hostpath.csi.k8s.io
 deletionPolicy: Delete
 
 ---
