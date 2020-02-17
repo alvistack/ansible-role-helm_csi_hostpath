@@ -421,11 +421,13 @@ metadata:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: Reconcile
-provisioner: csi-hostpath
-volumeBindingMode: WaitForFirstConsumer
+provisioner: hostpath.csi.k8s.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
 
 ---
-apiVersion: snapshot.storage.k8s.io/v1alpha1
+apiVersion: snapshot.storage.k8s.io/v1beta1
 kind: VolumeSnapshotClass
 metadata:
   name: csi-hostpath
@@ -433,7 +435,8 @@ metadata:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: Reconcile
-snapshotter: hostpath.csi.k8s.io
+driver: hostpath.csi.k8s.io
+deletionPolicy: Delete
 
 ---
 apiVersion: v1
@@ -496,8 +499,9 @@ spec:
           args:
             - --v=5
             - --csi-address=/csi/csi.sock
-            - --connection-timeout=15s
             - --feature-gates=Topology=true
+          securityContext:
+            privileged: true
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -638,7 +642,8 @@ spec:
           args:
             - --v=5
             - --csi-address=/csi/csi.sock
-            - --connection-timeout=15s
+          securityContext:
+            privileged: true
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -708,6 +713,8 @@ spec:
           args:
             - --v=5
             - --csi-address=/csi/csi.sock
+          securityContext:
+            privileged: true
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -761,8 +768,6 @@ spec:
         app.kubernetes.io/part-of: csi-hostpath
         addonmanager.kubernetes.io/mode: Reconcile
     spec:
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: node-driver-registrar
           image: {{ csi_node_drive_registrar_image_repository }}/csi-node-driver-registrar:{{ csi_node_drive_registrar_version }}
@@ -829,6 +834,8 @@ spec:
               name: plugins-dir
             - mountPath: /csi-data-dir
               name: csi-data-dir
+            - mountPath: /dev
+              name: dev-dir
         - name: liveness-probe
           volumeMounts:
             - mountPath: /csi
@@ -836,7 +843,6 @@ spec:
           image: {{ livenessprobe_image_repository }}/livenessprobe:{{ livenessprobe_version }}
           args:
             - --csi-address=/csi/csi.sock
-            - --connection-timeout=3s
             - --health-port=9898
       volumes:
         - name: socket-dir
@@ -859,3 +865,7 @@ spec:
           hostPath:
             path: {{ csi_hostpath_data_dir }}
             type: DirectoryOrCreate
+        - name: dev-dir
+          hostPath:
+            path: /dev
+            type: Directory
