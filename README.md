@@ -1,6 +1,6 @@
 # Ansible Role for CSI Hostpath Driver on Kubernetes
 
-[![Travis](https://img.shields.io/travis/com/alvistack/ansible-role-kubernetes_csi_hostpath.svg)](https://travis-ci.com/alvistack/ansible-role-kubernetes_csi_hostpath)
+[![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/alvistack/ansible-role-kubernetes_csi_hostpath/master)](https://gitlab.com/alvistack/ansible-role-kubernetes_csi_hostpath/-/pipelines)
 [![GitHub release](https://img.shields.io/github/release/alvistack/ansible-role-kubernetes_csi_hostpath.svg)](https://github.com/alvistack/ansible-role-kubernetes_csi_hostpath/releases)
 [![GitHub license](https://img.shields.io/github/license/alvistack/ansible-role-kubernetes_csi_hostpath.svg)](https://github.com/alvistack/ansible-role-kubernetes_csi_hostpath/blob/master/LICENSE)
 [![Ansible Role](https://img.shields.io/badge/galaxy-alvistack.kubernetes_csi_hostpath-blue.svg)](https://galaxy.ansible.com/alvistack/kubernetes_csi_hostpath)
