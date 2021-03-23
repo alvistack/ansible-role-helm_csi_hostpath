@@ -496,6 +496,7 @@ spec:
       containers:
         - name: csi-hostpath-provisioner
           image: {{ csi_provisioner_image_repository }}/csi-provisioner:{{ csi_provisioner_version }}
+          imagePullPolicy: IfNotPresent
           args:
             - --v=5
             - --csi-address=/csi/csi.sock
@@ -569,6 +570,7 @@ spec:
       containers:
         - name: csi-hostpath-attacher
           image: {{ csi_attacher_image_repository }}/csi-attacher:{{ csi_attacher_version }}
+          imagePullPolicy: IfNotPresent
           args:
             - --v=5
             - --csi-address=/csi/csi.sock
@@ -639,6 +641,7 @@ spec:
       containers:
         - name: csi-hostpath-snapshotter
           image: {{ csi_snapshotter_image_repository }}/csi-snapshotter:{{ csi_snapshotter_version }}
+          imagePullPolicy: IfNotPresent
           args:
             - --v=5
             - --csi-address=/csi/csi.sock
@@ -710,6 +713,7 @@ spec:
       containers:
         - name: csi-hostpath-resizer
           image: {{ csi_resizer_image_repository }}/csi-resizer:{{ csi_resizer_version }}
+          imagePullPolicy: IfNotPresent
           args:
             - --v=5
             - --csi-address=/csi/csi.sock
@@ -771,6 +775,7 @@ spec:
       containers:
         - name: node-driver-registrar
           image: {{ csi_node_drive_registrar_image_repository }}/csi-node-driver-registrar:{{ csi_node_drive_registrar_version }}
+          imagePullPolicy: IfNotPresent
           lifecycle:
             preStop:
               exec:
@@ -796,6 +801,7 @@ spec:
               name: csi-data-dir
         - name: hostpath
           image: {{ csi_hostpathplugin_image_repository }}/hostpathplugin:{{ csi_hostpathplugin_version }}
+          imagePullPolicy: IfNotPresent
           args:
             - --v=5
             - --nodeid=$(KUBE_NODE_NAME)
@@ -841,6 +847,7 @@ spec:
             - mountPath: /csi
               name: socket-dir
           image: {{ livenessprobe_image_repository }}/livenessprobe:{{ livenessprobe_version }}
+          imagePullPolicy: IfNotPresent
           args:
             - --csi-address=/csi/csi.sock
             - --health-port=9898
