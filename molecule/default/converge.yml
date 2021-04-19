@@ -208,11 +208,11 @@
         name: kubernetes_weave
       tags: kubernetes_weave
 
-- hosts: kube_master
-  remote_user: root
-  become: true
-  tasks:
-    - name: include role
-      include_role:
-        name: kubernetes_csi_hostpath
-      tags: kubernetes_csi_hostpath
+#- hosts: kube_master
+#  remote_user: root
+#  become: true
+#  tasks:
+#    - name: include role
+#      include_role:
+#        name: kubernetes_csi_hostpath
+#      tags: kubernetes_csi_hostpath
