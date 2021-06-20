@@ -484,11 +484,7 @@ volumeBindingMode: Immediate
 allowVolumeExpansion: true
 
 ---
-{% if kubernetes_release < 'v1.20' %}
-apiVersion: snapshot.storage.k8s.io/v1beta1
-{% elif kubernetes_release >= 'v1.20' %}
 apiVersion: snapshot.storage.k8s.io/v1
-{% endif %}
 kind: VolumeSnapshotClass
 metadata:
   name: csi-hostpath
@@ -666,11 +662,7 @@ spec:
             - mountPath: /csi
               name: socket-dir
         - name: csi-hostpath-snapshotter
-{% if kubernetes_release < 'v1.20' %}
-          image: k8s.gcr.io/sig-storage/csi-snapshotter:v3.0.3
-{% elif kubernetes_release >= 'v1.20' %}
           image: k8s.gcr.io/sig-storage/csi-snapshotter:v4.1.1
-{% endif %}
           imagePullPolicy: IfNotPresent
           args:
             - --v=5
