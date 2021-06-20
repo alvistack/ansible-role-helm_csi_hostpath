@@ -27,7 +27,7 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: csi-hostpath-provisioner
+  name: csi-hostpathplugin
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -86,7 +86,7 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpath-provisioner
+    name: csi-hostpathplugin
     namespace: csi-hostpath
 roleRef:
   kind: ClusterRole
@@ -132,23 +132,12 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpath-provisioner
+    name: csi-hostpathplugin
     namespace: csi-hostpath
 roleRef:
   kind: Role
   name: csi-hostpath-provisioner
   apiGroup: rbac.authorization.k8s.io
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: csi-hostpath-attacher
-  namespace: csi-hostpath
-  labels:
-    app.kubernetes.io/name: csi-hostpath
-    app.kubernetes.io/part-of: csi-hostpath
-    addonmanager.kubernetes.io/mode: Reconcile
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -187,7 +176,7 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpath-attacher
+    name: csi-hostpathplugin
     namespace: csi-hostpath
 roleRef:
   kind: ClusterRole
@@ -221,23 +210,12 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpath-attacher
+    name: csi-hostpathplugin
     namespace: csi-hostpath
 roleRef:
   kind: Role
   name: csi-hostpath-attacher
   apiGroup: rbac.authorization.k8s.io
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: csi-hostpath-snapshotter
-  namespace: csi-hostpath
-  labels:
-    app.kubernetes.io/name: csi-hostpath
-    app.kubernetes.io/part-of: csi-hostpath
-    addonmanager.kubernetes.io/mode: Reconcile
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -252,6 +230,9 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]
     verbs: ["get", "list", "watch"]
@@ -273,7 +254,7 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpath-snapshotter
+    name: csi-hostpathplugin
     namespace: csi-hostpath
 roleRef:
   kind: ClusterRole
@@ -307,23 +288,12 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpath-snapshotter
+    name: csi-hostpathplugin
     namespace: csi-hostpath
 roleRef:
   kind: Role
   name: csi-hostpath-snapshotter
   apiGroup: rbac.authorization.k8s.io
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: csi-hostpath-resizer
-  namespace: csi-hostpath
-  labels:
-    app.kubernetes.io/name: csi-hostpath
-    app.kubernetes.io/part-of: csi-hostpath
-    addonmanager.kubernetes.io/mode: Reconcile
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -365,7 +335,7 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpath-resizer
+    name: csi-hostpathplugin
     namespace: csi-hostpath
 roleRef:
   kind: ClusterRole
@@ -399,23 +369,12 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpath-resizer
+    name: csi-hostpathplugin
     namespace: csi-hostpath
 roleRef:
   kind: Role
   name: csi-hostpath-resizer
   apiGroup: rbac.authorization.k8s.io
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: csi-external-health-monitor-controller
-  namespace: csi-hostpath
-  labels:
-    app.kubernetes.io/name: csi-hostpath
-    app.kubernetes.io/part-of: csi-hostpath
-    addonmanager.kubernetes.io/mode: Reconcile
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -454,7 +413,7 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-external-health-monitor-controller
+    name: csi-hostpathplugin
     namespace: csi-hostpath
 roleRef:
   kind: ClusterRole
@@ -488,12 +447,27 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-external-health-monitor-controller
+    name: csi-hostpathplugin
     namespace: csi-hostpath
 roleRef:
   kind: Role
   name: csi-external-health-monitor-controller
   apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: hostpath.csi.k8s.io
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  volumeLifecycleModes:
+    - Persistent
+    - Ephemeral
+  podInfoOnMount: true
 
 ---
 apiVersion: storage.k8s.io/v1
@@ -510,7 +484,7 @@ volumeBindingMode: Immediate
 allowVolumeExpansion: true
 
 ---
-apiVersion: snapshot.storage.k8s.io/v1beta1
+apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
   name: csi-hostpath
@@ -520,221 +494,6 @@ metadata:
     addonmanager.kubernetes.io/mode: Reconcile
 driver: hostpath.csi.k8s.io
 deletionPolicy: Delete
-
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: csi-hostpath-provisioner
-  namespace: csi-hostpath
-  labels:
-    app.kubernetes.io/name: csi-hostpath-provisioner
-    app.kubernetes.io/part-of: csi-hostpath
-    addonmanager.kubernetes.io/mode: Reconcile
-spec:
-  serviceName: csi-hostpath-provisioner
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: csi-hostpath-provisioner
-      app.kubernetes.io/part-of: csi-hostpath
-      addonmanager.kubernetes.io/mode: Reconcile
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: csi-hostpath-provisioner
-        app.kubernetes.io/part-of: csi-hostpath
-        addonmanager.kubernetes.io/mode: Reconcile
-    spec:
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                      - csi-hostpathplugin
-              topologyKey: kubernetes.io/hostname
-      serviceAccountName: csi-hostpath-provisioner
-      containers:
-        - name: csi-hostpath-provisioner
-          image: {{ csi_provisioner_image_repository }}/csi-provisioner:{{ csi_provisioner_version }}
-          imagePullPolicy: IfNotPresent
-          args:
-            - --v=5
-            - --csi-address=/csi/csi.sock
-            - --feature-gates=Topology=true
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - mountPath: /csi
-              name: socket-dir
-      volumes:
-        - name: socket-dir
-          hostPath:
-            path: /var/lib/kubelet/plugins/csi-hostpath
-            type: DirectoryOrCreate
-
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: csi-hostpath-attacher
-  namespace: csi-hostpath
-  labels:
-    app.kubernetes.io/name: csi-hostpath-attacher
-    app.kubernetes.io/part-of: csi-hostpath
-    addonmanager.kubernetes.io/mode: Reconcile
-spec:
-  serviceName: csi-hostpath-attacher
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: csi-hostpath-attacher
-      app.kubernetes.io/part-of: csi-hostpath
-      addonmanager.kubernetes.io/mode: Reconcile
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: csi-hostpath-attacher
-        app.kubernetes.io/part-of: csi-hostpath
-        addonmanager.kubernetes.io/mode: Reconcile
-    spec:
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                      - csi-hostpathplugin
-              topologyKey: kubernetes.io/hostname
-      serviceAccountName: csi-hostpath-attacher
-      containers:
-        - name: csi-hostpath-attacher
-          image: {{ csi_attacher_image_repository }}/csi-attacher:{{ csi_attacher_version }}
-          imagePullPolicy: IfNotPresent
-          args:
-            - --v=5
-            - --csi-address=/csi/csi.sock
-          volumeMounts:
-            - mountPath: /csi
-              name: socket-dir
-      volumes:
-        - name: socket-dir
-          hostPath:
-            path: /var/lib/kubelet/plugins/csi-hostpath
-            type: DirectoryOrCreate
-
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: csi-hostpath-snapshotter
-  namespace: csi-hostpath
-  labels:
-    app.kubernetes.io/name: csi-hostpath-snapshotter
-    app.kubernetes.io/part-of: csi-hostpath
-    addonmanager.kubernetes.io/mode: Reconcile
-spec:
-  serviceName: csi-hostpath-snapshotter
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: csi-hostpath-snapshotter
-      app.kubernetes.io/part-of: csi-hostpath
-      addonmanager.kubernetes.io/mode: Reconcile
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: csi-hostpath-snapshotter
-        app.kubernetes.io/part-of: csi-hostpath
-        addonmanager.kubernetes.io/mode: Reconcile
-    spec:
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                      - csi-hostpathplugin
-              topologyKey: kubernetes.io/hostname
-      serviceAccountName: csi-hostpath-snapshotter
-      containers:
-        - name: csi-hostpath-snapshotter
-          image: {{ csi_snapshotter_image_repository }}/csi-snapshotter:{{ csi_snapshotter_version }}
-          imagePullPolicy: IfNotPresent
-          args:
-            - --v=5
-            - --csi-address=/csi/csi.sock
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - mountPath: /csi
-              name: socket-dir
-      volumes:
-        - name: socket-dir
-          hostPath:
-            path: /var/lib/kubelet/plugins/csi-hostpath
-            type: DirectoryOrCreate
-
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: csi-hostpath-resizer
-  namespace: csi-hostpath
-  labels:
-    app.kubernetes.io/name: csi-hostpath-resizer
-    app.kubernetes.io/part-of: csi-hostpath
-    addonmanager.kubernetes.io/mode: Reconcile
-spec:
-  serviceName: csi-hostpath-resizer
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: csi-hostpath-resizer
-      app.kubernetes.io/part-of: csi-hostpath
-      addonmanager.kubernetes.io/mode: Reconcile
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: csi-hostpath-resizer
-        app.kubernetes.io/part-of: csi-hostpath
-        addonmanager.kubernetes.io/mode: Reconcile
-    spec:
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                      - csi-hostpathplugin
-              topologyKey: kubernetes.io/hostname
-      serviceAccountName: csi-hostpath-resizer
-      containers:
-        - name: csi-hostpath-resizer
-          image: {{ csi_resizer_image_repository }}/csi-resizer:{{ csi_resizer_version }}
-          imagePullPolicy: IfNotPresent
-          args:
-            - --v=5
-            - --csi-address=/csi/csi.sock
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - mountPath: /csi
-              name: socket-dir
-      volumes:
-        - name: socket-dir
-          hostPath:
-            path: /var/lib/kubelet/plugins/csi-hostpath
-            type: DirectoryOrCreate
 
 ---
 apiVersion: apps/v1
@@ -761,75 +520,24 @@ spec:
         app.kubernetes.io/part-of: csi-hostpath
         addonmanager.kubernetes.io/mode: Reconcile
     spec:
-      serviceAccount: csi-external-health-monitor-controller
+      serviceAccount: csi-hostpathplugin
       containers:
-        - name: csi-external-health-monitor-agent
-          image: {{ csi_external_health_monitor_agent_image_repository }}/csi-external-health-monitor-agent:{{ csi_external_health_monitor_agent_version }}
-          imagePullPolicy: IfNotPresent
-          args:
-            - --v=5
-            - --csi-address=$(ADDRESS)
-          env:
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: ADDRESS
-              value: /csi/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /csi
-        - name: csi-external-health-monitor-controller
-          image: {{ csi_external_health_monitor_controller_image_repository }}/csi-external-health-monitor-controller:{{ csi_external_health_monitor_controller_version }}
-          imagePullPolicy: IfNotPresent
-          args:
-            - --v=5
-            - --csi-address=$(ADDRESS)
-            - --leader-election
-          env:
-            - name: ADDRESS
-              value: /csi/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /csi
-        - name: node-driver-registrar
-          image: {{ csi_node_drive_registrar_image_repository }}/csi-node-driver-registrar:{{ csi_node_drive_registrar_version }}
-          imagePullPolicy: IfNotPresent
-          args:
-            - --v=5
-            - --csi-address=/csi/csi.sock
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi-hostpath/csi.sock
-          securityContext:
-            privileged: true
-          env:
-            - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
-          volumeMounts:
-            - mountPath: /csi
-              name: socket-dir
-            - mountPath: /registration
-              name: registration-dir
-            - mountPath: /csi-data-dir
-              name: csi-data-dir
         - name: hostpath
-          image: {{ csi_hostpathplugin_image_repository }}/hostpathplugin:{{ csi_hostpathplugin_version }}
+          image: k8s.gcr.io/sig-storage/hostpathplugin:v1.7.2
           imagePullPolicy: IfNotPresent
           args:
-            - --v=5
-            - --nodeid=$(KUBE_NODE_NAME)
-            - --endpoint=$(CSI_ENDPOINT)
             - --drivername=hostpath.csi.k8s.io
+            - --v=5
+            - --endpoint=$(CSI_ENDPOINT)
+            - --nodeid=$(KUBE_NODE_NAME)
           env:
-            - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
           securityContext:
             privileged: true
           ports:
@@ -857,15 +565,113 @@ spec:
               name: csi-data-dir
             - mountPath: /dev
               name: dev-dir
+{% if kubernetes_release < 'v1.21' %}
+        - name: csi-external-health-monitor-agent
+          image: k8s.gcr.io/sig-storage/csi-external-health-monitor-agent:v0.2.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --v=5
+            - --csi-address=$(ADDRESS)
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+{% endif %}
+        - name: csi-external-health-monitor-controller
+          image: k8s.gcr.io/sig-storage/csi-external-health-monitor-controller:v0.3.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --v=5
+            - --csi-address=$(ADDRESS)
+            - --leader-election
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+        - name: node-driver-registrar
+          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.2.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi-hostpath/csi.sock
+          securityContext:
+            privileged: true
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+            - mountPath: /registration
+              name: registration-dir
+            - mountPath: /csi-data-dir
+              name: csi-data-dir
         - name: liveness-probe
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-          image: {{ livenessprobe_image_repository }}/livenessprobe:{{ livenessprobe_version }}
+          image: k8s.gcr.io/sig-storage/livenessprobe:v2.3.0
           imagePullPolicy: IfNotPresent
           args:
             - --csi-address=/csi/csi.sock
             - --health-port=9898
+        - name: csi-hostpath-attacher
+          image: k8s.gcr.io/sig-storage/csi-attacher:v3.2.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+        - name: csi-hostpath-provisioner
+          image: k8s.gcr.io/sig-storage/csi-provisioner:v2.2.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+            - --feature-gates=Topology=true
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+        - name: csi-hostpath-resizer
+          image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+        - name: csi-hostpath-snapshotter
+          image: k8s.gcr.io/sig-storage/csi-snapshotter:v4.1.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
       volumes:
         - name: socket-dir
           hostPath:
