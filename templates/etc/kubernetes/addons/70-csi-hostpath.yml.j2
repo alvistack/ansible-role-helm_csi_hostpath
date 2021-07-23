@@ -565,7 +565,7 @@ spec:
               name: csi-data-dir
             - mountPath: /dev
               name: dev-dir
-{% if kubernetes_release < '1.21' %}
+{% if kube_release < '1.21' %}
         - name: csi-external-health-monitor-agent
           image: k8s.gcr.io/sig-storage/csi-external-health-monitor-agent:v0.2.0
           imagePullPolicy: IfNotPresent
