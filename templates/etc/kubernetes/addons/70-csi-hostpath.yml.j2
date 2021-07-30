@@ -691,7 +691,7 @@ spec:
             type: Directory
         - name: csi-data-dir
           hostPath:
-            path: {{ csi_hostpath_data_dir }}
+            path: {{ kube_csi_hostpath_data_dir }}
             type: DirectoryOrCreate
         - name: dev-dir
           hostPath:
