@@ -15,7 +15,7 @@
 # limitations under the License.
 
 # Kubernetes release.
-kube_release: "1.21"
+kube_release: "{{ _kube_release }}"
 
 # CSI HostPath data directory.
-csi_hostpath_data_dir: "/var/lib/csi-hostpath"
+kube_csi_hostpath_data_dir: "/var/lib/csi-hostpath"
