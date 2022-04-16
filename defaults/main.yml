@@ -14,8 +14,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kubernetes release.
-kube_release: "{{ _kube_release }}"
-
 # CSI HostPath data directory.
 kube_csi_hostpath_data_dir: "/var/lib/csi-hostpath"
