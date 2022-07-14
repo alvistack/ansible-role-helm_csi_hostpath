@@ -1,5 +1,9 @@
 # Ansible Role for CSI Hostpath Driver on Kubernetes
 
+## 6.2.0 - TBC
+
+### Major Changes
+
 ## 6.1.0 - TBC
 
 ### Major Changes
