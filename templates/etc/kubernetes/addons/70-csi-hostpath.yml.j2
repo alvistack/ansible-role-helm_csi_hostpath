@@ -1,5 +1,3 @@
----
-
 # Copyright 2022 Wong Hoi Sing Edison <hswong3i@pantarei-design.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+---
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -27,7 +26,7 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: csi-hostpathplugin
+  name: csi-provisioner
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -38,15 +37,12 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: csi-hostpath-provisioner
+  name: external-provisioner-runner
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: Reconcile
 rules:
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "create", "delete"]
@@ -79,34 +75,31 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: csi-hostpath-provisioner
+  name: csi-provisioner-role
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpathplugin
+    name: csi-provisioner
     namespace: csi-hostpath
 roleRef:
   kind: ClusterRole
-  name: csi-hostpath-provisioner
+  name: external-provisioner-runner
   apiGroup: rbac.authorization.k8s.io
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: csi-hostpath-provisioner
+  name: external-provisioner-cfg
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: Reconcile
 rules:
-  - apiGroups: [""]
-    resources: ["endpoints"]
-    verbs: ["get", "watch", "list", "delete", "update", "create"]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
@@ -124,7 +117,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: csi-hostpath-provisioner
+  name: csi-provisioner-role-cfg
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -132,18 +125,29 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpathplugin
+    name: csi-provisioner
     namespace: csi-hostpath
 roleRef:
   kind: Role
-  name: csi-hostpath-provisioner
+  name: external-provisioner-cfg
   apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-attacher
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: csi-hostpath-attacher
+  name: external-attacher-runner
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
@@ -161,33 +165,30 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments/status"]
     verbs: ["patch"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: csi-hostpath-attacher
+  name: csi-attacher-role
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpathplugin
+    name: csi-attacher
     namespace: csi-hostpath
 roleRef:
   kind: ClusterRole
-  name: csi-hostpath-attacher
+  name: external-attacher-runner
   apiGroup: rbac.authorization.k8s.io
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: csi-hostpath-attacher
+  name: external-attacher-cfg
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -202,7 +203,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: csi-hostpath-attacher
+  name: csi-attacher-role-cfg
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -210,18 +211,28 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpathplugin
+    name: csi-attacher
     namespace: csi-hostpath
 roleRef:
   kind: Role
-  name: csi-hostpath-attacher
+  name: external-attacher-cfg
   apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-snapshotter
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: csi-hostpath-snapshotter
+  name: external-snapshotter-runner
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
@@ -230,42 +241,39 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["list", "watch", "create", "update", "patch"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents"]
-    verbs: ["create", "get", "list", "watch", "update", "delete"]
+    verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents/status"]
-    verbs: ["update"]
+    verbs: ["update", "patch"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: csi-hostpath-snapshotter
+  name: csi-snapshotter-role
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpathplugin
+    name: csi-snapshotter
     namespace: csi-hostpath
 roleRef:
   kind: ClusterRole
-  name: csi-hostpath-snapshotter
+  name: external-snapshotter-runner
   apiGroup: rbac.authorization.k8s.io
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: csi-hostpath-snapshotter
+  name: external-snapshotter-leaderelection
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -280,7 +288,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: csi-hostpath-snapshotter
+  name: external-snapshotter-leaderelection
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -288,26 +296,34 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpathplugin
+    name: csi-snapshotter
     namespace: csi-hostpath
 roleRef:
   kind: Role
-  name: csi-hostpath-snapshotter
+  name: external-snapshotter-leaderelection
   apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-resizer
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: csi-hostpath-resizer
+  name: external-resizer-runner
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: Reconcile
 rules:
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "patch"]
@@ -328,25 +344,25 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: csi-hostpath-resizer
+  name: csi-resizer-role
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpathplugin
+    name: csi-resizer
     namespace: csi-hostpath
 roleRef:
   kind: ClusterRole
-  name: csi-hostpath-resizer
+  name: external-resizer-runner
   apiGroup: rbac.authorization.k8s.io
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: csi-hostpath-resizer
+  name: external-resizer-cfg
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -361,7 +377,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: csi-hostpath-resizer
+  name: csi-resizer-role-cfg
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -369,18 +385,29 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpathplugin
+    name: csi-resizer
     namespace: csi-hostpath
 roleRef:
   kind: Role
-  name: csi-hostpath-resizer
+  name: external-resizer-cfg
   apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-external-health-monitor-controller
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: csi-external-health-monitor-controller
+  name: external-health-monitor-controller-runner
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
@@ -406,25 +433,25 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: csi-external-health-monitor-controller
+  name: csi-external-health-monitor-controller-role
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpathplugin
+    name: csi-external-health-monitor-controller
     namespace: csi-hostpath
 roleRef:
   kind: ClusterRole
-  name: csi-external-health-monitor-controller
+  name: external-health-monitor-controller-runner
   apiGroup: rbac.authorization.k8s.io
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: csi-external-health-monitor-controller
+  name: external-health-monitor-controller-cfg
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -439,7 +466,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: csi-external-health-monitor-controller
+  name: csi-external-health-monitor-controller-role-cfg
   namespace: csi-hostpath
   labels:
     app.kubernetes.io/name: csi-hostpath
@@ -447,11 +474,11 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
 subjects:
   - kind: ServiceAccount
-    name: csi-hostpathplugin
+    name: csi-external-health-monitor-controller
     namespace: csi-hostpath
 roleRef:
   kind: Role
-  name: csi-external-health-monitor-controller
+  name: external-health-monitor-controller-cfg
   apiGroup: rbac.authorization.k8s.io
 
 ---
@@ -468,6 +495,7 @@ spec:
     - Persistent
     - Ephemeral
   podInfoOnMount: true
+  fsGroupPolicy: File
 
 ---
 apiVersion: storage.k8s.io/v1
@@ -487,7 +515,7 @@ allowVolumeExpansion: true
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
-  name: csi-hostpath
+  name: csi-hostpath-snapclass
   labels:
     app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
@@ -496,13 +524,199 @@ driver: hostpath.csi.k8s.io
 deletionPolicy: Delete
 
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-hostpathplugin-sa
+  namespace: csi-hostpath
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: Reconcile
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: csi-hostpathplugin-attacher-cluster-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-attacher-runner
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpathplugin-sa
+    namespace: csi-hostpath
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: csi-hostpathplugin-health-monitor-controller-cluster-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-health-monitor-controller-runner
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpathplugin-sa
+    namespace: csi-hostpath
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: csi-hostpathplugin-provisioner-cluster-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-provisioner-runner
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpathplugin-sa
+    namespace: csi-hostpath
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: csi-hostpathplugin-resizer-cluster-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-resizer-runner
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpathplugin-sa
+    namespace: csi-hostpath
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: csi-hostpathplugin-snapshotter-cluster-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-snapshotter-runner
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpathplugin-sa
+    namespace: csi-hostpath
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: csi-hostpathplugin-attacher-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: external-attacher-cfg
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpathplugin-sa
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: csi-hostpathplugin-health-monitor-controller-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: external-health-monitor-controller-cfg
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpathplugin-sa
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: csi-hostpathplugin-provisioner-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: external-provisioner-cfg
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpathplugin-sa
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: csi-hostpathplugin-resizer-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: external-resizer-cfg
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpathplugin-sa
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: csi-hostpathplugin-snapshotter-role
+  labels:
+    app.kubernetes.io/name: csi-hostpath
+    app.kubernetes.io/part-of: csi-hostpath
+    addonmanager.kubernetes.io/mode: EnsureExists
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: external-snapshotter-leaderelection
+subjects:
+  - kind: ServiceAccount
+    name: csi-hostpathplugin-sa
+
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: csi-hostpathplugin
   namespace: csi-hostpath
   labels:
-    app.kubernetes.io/name: csi-hostpathplugin
+    app.kubernetes.io/name: csi-hostpath
     app.kubernetes.io/part-of: csi-hostpath
     addonmanager.kubernetes.io/mode: Reconcile
 spec:
@@ -510,20 +724,20 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: csi-hostpathplugin
+      app.kubernetes.io/name: csi-hostpath
       app.kubernetes.io/part-of: csi-hostpath
       addonmanager.kubernetes.io/mode: Reconcile
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: csi-hostpathplugin
+        app.kubernetes.io/name: csi-hostpath
         app.kubernetes.io/part-of: csi-hostpath
         addonmanager.kubernetes.io/mode: Reconcile
     spec:
-      serviceAccount: csi-hostpathplugin
+      serviceAccountName: csi-hostpathplugin-sa
       containers:
         - name: hostpath
-          image: registry.k8s.io/sig-storage/hostpathplugin:v1.8.0
+          image: registry.k8s.io/sig-storage/hostpathplugin:v1.9.0
           imagePullPolicy: IfNotPresent
           args:
             - --drivername=hostpath.csi.k8s.io
@@ -566,7 +780,7 @@ spec:
             - mountPath: /dev
               name: dev-dir
         - name: csi-external-health-monitor-controller
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.4.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.7.0
           imagePullPolicy: IfNotPresent
           args:
             - --v=5
@@ -579,7 +793,7 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - name: node-driver-registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.5.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.0
           imagePullPolicy: IfNotPresent
           args:
             - --v=5
@@ -604,13 +818,13 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-          image: registry.k8s.io/sig-storage/livenessprobe:v2.6.0
+          image: registry.k8s.io/sig-storage/livenessprobe:v2.8.0
           imagePullPolicy: IfNotPresent
           args:
             - --csi-address=/csi/csi.sock
             - --health-port=9898
-        - name: csi-hostpath-attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v3.4.0
+        - name: csi-attacher
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.0.0
           imagePullPolicy: IfNotPresent
           args:
             - --v=5
@@ -620,8 +834,8 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-        - name: csi-hostpath-provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.1.0
+        - name: csi-provisioner
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.3.0
           imagePullPolicy: IfNotPresent
           args:
             - --v=5
@@ -632,8 +846,8 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-        - name: csi-hostpath-resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.4.0
+        - name: csi-resizer
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.6.0
           imagePullPolicy: IfNotPresent
           args:
             - --v=5
@@ -643,8 +857,8 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-        - name: csi-hostpath-snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v5.0.1
+        - name: csi-snapshotter
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.1.0
           imagePullPolicy: IfNotPresent
           args:
             - --v=5
