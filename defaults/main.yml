@@ -15,4 +15,4 @@
 # limitations under the License.
 
 # CSI HostPath data directory.
-kube_csi_hostpath_data_dir: "/var/lib/csi-hostpath/volumes"
+kube_csi_hostpath_data_dir: /var/lib/csi-hostpath/volumes
