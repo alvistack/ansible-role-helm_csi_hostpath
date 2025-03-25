@@ -1,4 +1,4 @@
-# Ansible Role for CSI Hostpath Driver on Kubernetes
+# Ansible Role for CSI Hostpath Driver with Helm
 
 <a href="https://alvistack.com" title="AlviStack" target="_blank"><img src="/alvistack.svg" height="75" alt="AlviStack"></a>
 
@@ -7,7 +7,7 @@
 [![GitHub license](https://img.shields.io/github/license/alvistack/ansible-role-kube_csi_hostpath.svg)](https://github.com/alvistack/ansible-role-kube_csi_hostpath/blob/master/LICENSE)
 [![Ansible Role](https://img.shields.io/badge/galaxy-alvistack.kube_csi_hostpath-blue.svg)](https://galaxy.ansible.com/alvistack/kube_csi_hostpath)
 
-Ansible Role for CSI Hostpath Driver on Kubernetes Installation.
+Ansible Role for CSI Hostpath Driver with Helm Installation.
 
 ## Requirements
 

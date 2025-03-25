@@ -14,5 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# CSI HostPath data directory.
-kube_csi_hostpath_data_dir: /var/lib/csi-hostpath/volumes
+# Release name to manage.
+helm_csi_hostpath_helm_release_name: csi-hostpathplugin
+
+# Kubernetes namespace where the chart should be installed.
+helm_csi_hostpath_helm_release_namespace: csi-hostpath
+
+# Value to pass to chart.
+helm_csi_hostpath_helm_release_values:
+  csiHostpathplugin:
+    replicaCount: 1
+    volumes:
+      csiDataDir:
+        path: /var/lib/csi-hostpath/volumes
+  storageClass:
+    name: csi-hostpath
+  volumeSnapshotClass:
+    name: csi-hostpath
+  volumeGroupSnapshotClass:
+    name: csi-hostpath
