@@ -28,8 +28,11 @@ helm_csi_hostpath_helm_release_values:
       csiDataDir:
         path: /var/lib/csi-hostpath/volumes
   storageClass:
+    create: true
     name: csi-hostpath
   volumeSnapshotClass:
+    create: true
     name: csi-hostpath
   volumeGroupSnapshotClass:
+    create: true
     name: csi-hostpath

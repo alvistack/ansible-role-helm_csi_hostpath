@@ -31,3 +31,7 @@ roles:
   - name: alvistack.helm_cilium
     src: https://github.com/alvistack/ansible-role-helm_cilium
     version: develop
+
+  - name: alvistack.helm_csi_snapshotter
+    src: https://github.com/alvistack/ansible-role-helm_csi_snapshotter
+    version: develop

@@ -47,4 +47,8 @@
 
     - name: include role
       ansible.builtin.include_role:
+        name: alvistack.helm_csi_snapshotter
+
+    - name: include role
+      ansible.builtin.include_role:
         name: alvistack.helm_csi_hostpath

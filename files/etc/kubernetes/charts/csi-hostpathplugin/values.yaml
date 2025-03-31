@@ -45,8 +45,11 @@ csiHostpathplugin:
     csiDataDir:
       path: /var/lib/csi-hostpath-data
 storageClass:
+  create: false
   name: csi-hostpath-sc
 volumeSnapshotClass:
+  create: false
   name: csi-hostpath-snapclass
 volumeGroupSnapshotClass:
+  create: false
   name: csi-hostpath-groupsnapclass
