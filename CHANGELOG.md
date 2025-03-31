@@ -1,6 +1,13 @@
-# Ansible Role for CSI Hostpath Driver on Kubernetes
+# Ansible Role for CSI Hostpath Driver with Helm
 
-## 11.4.0 - TBC
+## 11.5.0 - TBC
+
+## 11.4.0 - 2025-03-31
+
+- Support Ansible community package 11.4.0
+- Add VolumeSnapshotClass and VolumeGroupSnapshotClass support
+- Rename prefix with `helm_`
+- Simplify with Helm
 
 ## 11.3.0 - 2025-02-27
 
