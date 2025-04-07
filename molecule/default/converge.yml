@@ -13,6 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+- name: converge | all
+  hosts: all
+  remote_user: root
+  become: true
+
 - name: converge | kube_master
   hosts: kube_master
   remote_user: root
