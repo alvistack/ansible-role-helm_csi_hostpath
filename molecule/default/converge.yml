@@ -13,6 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+- name: converge | all
+  hosts: all
+  remote_user: root
+  become: true
+
 - name: converge | kube_master
   hosts: kube_master
   remote_user: root
@@ -25,7 +30,7 @@
           kubectl get --raw='/readyz?verbose' | grep 'check passed'
       args:
         executable: /bin/bash
-      when: inventory_hostname == ansible_play_hosts[0]
+      when: inventory_hostname == groups['kube_master'][0]
       register: result
       changed_when: result is not succeeded
       until: result is succeeded
