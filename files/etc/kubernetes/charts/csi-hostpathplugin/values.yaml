@@ -5,7 +5,7 @@ csiHostpathplugin:
     image:
       repository: registry.k8s.io/sig-storage/hostpathplugin
       pullPolicy: IfNotPresent
-      tag: v1.17.0
+      tag: v1.17.1
   csiExternalHealthMonitorController:
     image:
       repository: registry.k8s.io/sig-storage/csi-external-health-monitor-controller
