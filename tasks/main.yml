@@ -115,8 +115,6 @@
           storageclass.kubernetes.io/is-default-class: "true"
         name: csi-hostpath
       provisioner: hostpath.csi.k8s.io
-      reclaimPolicy: Delete
-      volumeBindingMode: Immediate
   when: inventory_hostname == groups['kube_master'][0]
   register: result
   changed_when: result is not succeeded
@@ -135,7 +133,6 @@
       metadata:
         name: csi-hostpath
       driver: hostpath.csi.k8s.io
-      deletionPolicy: Delete
   when: inventory_hostname == groups['kube_master'][0]
   register: result
   changed_when: result is not succeeded
@@ -154,7 +151,6 @@
       metadata:
         name: csi-hostpath
       driver: hostpath.csi.k8s.io
-      deletionPolicy: Delete
   when: inventory_hostname == groups['kube_master'][0]
   register: result
   changed_when: result is not succeeded
