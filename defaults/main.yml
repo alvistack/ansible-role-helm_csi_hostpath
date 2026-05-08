@@ -24,6 +24,30 @@ helm_csi_hostpath_helm_release_namespace: csi-hostpath
 helm_csi_hostpath_helm_release_values:
   csiHostpathplugin:
     replicaCount: 1
+    hostpath:
+      image:
+        repository: registry.k8s.io/sig-storage/hostpathplugin
+    csiExternalHealthMonitorController:
+      image:
+        repository: registry.k8s.io/sig-storage/csi-external-health-monitor-controller
+    nodeDriverRegistrar:
+      image:
+        repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
+    livenessProbe:
+      image:
+        repository: registry.k8s.io/sig-storage/livenessprobe
+    csiAttacher:
+      image:
+        repository: registry.k8s.io/sig-storage/csi-attacher
+    csiProvisioner:
+      image:
+        repository: registry.k8s.io/sig-storage/csi-provisioner
+    csiResizer:
+      image:
+        repository: registry.k8s.io/sig-storage/csi-resizer
+    csiSnapshotter:
+      image:
+        repository: registry.k8s.io/sig-storage/csi-snapshotter
     volumes:
       csiDataDir:
         path: /var/lib/csi-hostpath/volumes
